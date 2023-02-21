@@ -1,91 +1,127 @@
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from './page.module.css'
+'use client'
+import { Configuration, OpenAIApi } from 'openai'
+import { useState } from 'react'
 
-const inter = Inter({ subsets: ['latin'] })
+const configuration = new Configuration({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+})
+const openai = new OpenAIApi(configuration)
 
 export default function Home() {
+  const [input, setInput] = useState<string>('')
+  const [suggestion, setSuggestion] = useState<string>('')
+
+  const combineWords = async (secondWord: string) => {
+    try {
+      const result = await openai.createCompletion({
+        model: 'text-davinci-003',
+        prompt: `Combine the word "very" with another adjective to find a more suitable adjective.\n\nvery + cold = freezing\nvery + nice = charming\nvery + high = steep\nvery + shining = gleaming\nvery + ${secondWord} =`,
+        temperature: 0.7,
+        max_tokens: 256,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      })
+
+      if (!result.data.choices?.[0].text) throw new Error('Invalid response')
+      const suggestion = result.data.choices[0].text
+
+      setSuggestion(suggestion)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const getRandomAdjective = async () => {
+    // Generate random adjective
+    try {
+      const result = await openai.createCompletion({
+        model: 'text-davinci-003',
+        prompt:
+          'Come up with one random adjective that goes well with the word "very" in front of it:\nAdjective: very',
+        temperature: 0.7,
+        max_tokens: 256,
+        top_p: 1,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+      })
+
+      if (!result.data.choices?.[0].text) throw new Error('Invalid response')
+      const adjective = result.data.choices[0].text.trim()
+
+      return adjective
+    } catch (error) {
+      throw new Error('Invalid action')
+    }
+  }
+
+  // Handle random result
+  const handleRandomResult = async () => {
+    const adjective = await getRandomAdjective()
+    setInput(adjective)
+    handleGetResult(adjective)
+  }
+
+  // Handle input submission
+  const handleGetResult = (input: string) => {
+    combineWords(input)
+  }
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
+    <div className="max-w-6xl mx-auto min-h-screen flex flex-col items-center mt-32 mb-16 sm:text-center sm:mb-0">
+      <div className="w-12 h-12">
+        <img src="https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Ficon-icons.com%2Ficons2%2F931%2FPNG%2F512%2Fpencil_icon-icons.com_72386.png&amp;f=1&amp;nofb=1" />
+      </div>
+      <div className="text-gray-400 text-center">
+        Combine "very" with a simple adjective and get a more concise adjective
+      </div>
+      <div className="grid grid-cols-12 justify-center items-center w-full mb-4 py-16">
+        <p className="text-center col-span-2 text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
+          very
         </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+        <p className="text-center col-span-1 text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
+          +
+        </p>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="boring"
+          type="text"
+          className="col-span-4 text-center border-b-2 font-sans text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold h-24 transition duration-200 bg-white  border-gray-300 appearance-none focus:outline-none"
         />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
+        <p className="text-center col-span-1 text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
+          =
+        </p>
+        <div className="text-center  w-96 col-span-4">
+          <p
+            className={`cursor-pointer text-center text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold ${
+              suggestion ? 'text-green-700' : 'text-gray-500'
+            } font-serif`}
+          >
+            {suggestion || 'tedious'}
+          </p>
         </div>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div className="mb-4 flex flex-row">
+        <div className="pr-6 cursor-pointer">
+          <button
+            type="button"
+            onClick={() => handleGetResult(input)}
+            className="border-solid bg-black inline-flex items-center justify-center h-12 px-6 font-medium tracking-wide text-white transition duration-200 rounded shadow-md bg-deep-purple-accent-400 hover:bg-deep-purple-accent-700 focus:shadow-outline focus:outline-none"
+          >
+            Get/Refresh Result
+          </button>
+        </div>
+        <div className="pl-6 cursor-pointer">
+          <button
+            type="button"
+            onClick={handleRandomResult}
+            className="border-solid bg-black inline-flex items-center justify-center h-12 px-6 font-medium tracking-wide text-white transition duration-200 rounded shadow-md bg-deep-purple-accent-400 hover:bg-deep-purple-accent-700 focus:shadow-outline focus:outline-none"
+          >
+            Random
+          </button>
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
