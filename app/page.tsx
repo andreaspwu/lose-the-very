@@ -92,7 +92,7 @@ export default function Home() {
         <p className="text-center col-span-1 text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold">
           =
         </p>
-        <div className="text-center  w-96 col-span-4">
+        <div className="text-center col-span-4">
           <p
             className={`cursor-pointer text-center text-xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold ${
               suggestion ? 'text-green-700' : 'text-gray-500'
